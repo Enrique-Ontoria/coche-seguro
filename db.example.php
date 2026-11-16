@@ -1,8 +1,8 @@
 <?php
 $host = 'localhost';
 $db   = 'coche_seguro';
-$user = 'root';
-$pass = ''; // Por defecto en XAMPP viene vacía
+$user = 'your_user';
+$pass = 'your_password'; 
 $charset = 'utf8mb4';
 
 $dsn = "mysql:host=$host;dbname=$db;charset=$charset";

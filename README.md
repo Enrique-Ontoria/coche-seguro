@@ -1,4 +1,4 @@
-# 🚗 CocheSeguro — Used Car Buyer's Guide & Inspection Tool
+# CocheSeguro — Used Car Buyer's Guide & Inspection Tool
 
 Web application built to help everyday buyers evaluate second-hand vehicles without getting scammed, featuring engine reliability traffic lights and an in-situ interactive inspection checklist.
 
