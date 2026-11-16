@@ -86,7 +86,20 @@ $puntos = $stmt->fetchAll();
             </div>
 
             <!-- Panel de Veredicto Dinámico que busca checklist.js -->
-            <div id="panel-veredicto" class="alert alert-success d-flex align-items-center gap-3 mb-4">
+            <div id="panel-veredicto" 
+            data-modelo-id="<?= $coche['id'] ?>" 
+            data-modelo-nombre="<?= htmlspecialchars($coche['marca'] . ' ' . $coche['modelo'] . ' (' . $coche['generacion'] . ')') ?>"
+            class="alert alert-success d-flex align-items-center gap-3 mb-3">
+            
+            <!-- Barra de acciones rápidas -->
+            <div class="d-flex justify-content-between align-items-center gap-2 mb-4">
+                <button type="button" id="btn-copiar-informe" class="btn btn-dark btn-sm">
+                    📋 Copiar resumen para WhatsApp / Negociar
+                </button>
+                <button type="button" id="btn-reset-checklist" class="btn btn-outline-secondary btn-sm">
+                    🔄 Limpiar marcas
+                </button>
+            </div>
                 <span class="fs-2" id="icono-veredicto">🟢</span>
                 <div>
                     <h5 class="fw-bold mb-0" id="titulo-veredicto">Unidad aparentemente sana</h5>
