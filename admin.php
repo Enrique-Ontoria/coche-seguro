@@ -84,11 +84,32 @@ if (!empty($_SESSION['es_admin']) && $_SERVER['REQUEST_METHOD'] === 'POST') {
         ]);
         $mensaje = "Punto de revisión añadido a la checklist.";
     }
+
+    // D) Gestionar reportes de usuarios
+    if (isset($_POST['accion']) && $_POST['accion'] === 'marcar_reporte') {
+        $stmt = $pdo->prepare("UPDATE reportes SET estado = 'Revisado' WHERE id = ?");
+        $stmt->execute([(int)$_POST['reporte_id']]);
+        $mensaje = "Reporte marcado como revisado.";
+    }
+
+    if (isset($_POST['accion']) && $_POST['accion'] === 'eliminar_reporte') {
+        $stmt = $pdo->prepare("DELETE FROM reportes WHERE id = ?");
+        $stmt->execute([(int)$_POST['reporte_id']]);
+        $mensaje = "Reporte eliminado.";
+    }
 }
 
 // Obtener lista de modelos para los desplegables
 $lista_modelos = $pdo->query("SELECT id, marca, modelo, generacion FROM modelos ORDER BY marca, modelo")->fetchAll();
+
+$reportes = $pdo->query("
+    SELECT r.*, m.marca, m.modelo, m.generacion 
+    FROM reportes r 
+    JOIN modelos m ON r.modelo_id = m.id 
+    ORDER BY r.estado ASC, r.fecha_creacion DESC
+")->fetchAll();
 ?>
+
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -132,6 +153,42 @@ $lista_modelos = $pdo->query("SELECT id, marca, modelo, generacion FROM modelos 
             </div>
         </div>
     <?php else: ?>
+
+        <?php if (!empty($reportes)): ?>
+        <div class="col-12">
+            <div class="card shadow-sm border-warning">
+                <div class="card-header bg-warning-subtle fw-bold d-flex justify-content-between align-items-center">
+                    <span>📩 Buzón de Reportes de Usuarios (<?= count($reportes) ?>)</span>
+                </div>
+                <div class="list-group list-group-flush">
+                    <?php foreach ($reportes as $rep): ?>
+                        <div class="list-group-item d-flex justify-content-between align-items-start gap-3 <?= $rep['estado'] === 'Revisado' ? 'bg-light text-muted' : '' ?>">
+                            <div>
+                                <div class="mb-1">
+                                    <span class="badge <?= $rep['estado'] === 'Pendiente' ? 'bg-danger' : 'bg-secondary' ?>"><?= $rep['estado'] ?></span>
+                                    <span class="badge bg-dark"><?= htmlspecialchars("{$rep['marca']} {$rep['modelo']} ({$rep['generacion']})") ?></span>
+                                    <span class="badge bg-light text-dark border"><?= htmlspecialchars($rep['tipo']) ?></span>
+                                    <small class="text-muted ms-1"><?= date('d/m/Y H:i', strtotime($rep['fecha_creacion'])) ?></small>
+                                </div>
+                                <p class="mb-1 small"><?= nl2br(htmlspecialchars($rep['mensaje'])) ?></p>
+                                <?php if ($rep['contacto']): ?>
+                                    <small class="text-muted">Contacto: <?= htmlspecialchars($rep['contacto']) ?></small>
+                                <?php endif; ?>
+                            </div>
+                            <form method="POST" class="d-flex gap-1 flex-shrink-0">
+                                <input type="hidden" name="reporte_id" value="<?= $rep['id'] ?>">
+                                <?php if ($rep['estado'] === 'Pendiente'): ?>
+                                    <button type="submit" name="accion" value="marcar_reporte" class="btn btn-success btn-sm" title="Marcar revisado">✓</button>
+                                <?php endif; ?>
+                                <button type="submit" name="accion" value="eliminar_reporte" class="btn btn-outline-danger btn-sm" onclick="return confirm('¿Borrar reporte?')" title="Eliminar">✕</button>
+                            </form>
+                        </div>
+                    <?php endforeach; ?>
+                </div>
+            </div>
+        </div>
+        <?php endif; ?>
+
         <!-- Panel de Gestión -->
         <div class="row g-4">
             

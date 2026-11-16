@@ -1,8 +1,24 @@
 <?php
+
 require_once 'db.php';
 
 // Leemos el ID por URL (ej: ficha.php?id=2), si no viene o no es número, por defecto 1
 $modelo_id = filter_input(INPUT_GET, 'id', FILTER_VALIDATE_INT) ?: 1;
+
+// Procesar envío de reporte de usuario
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['enviar_reporte'])) {
+    $tipo = $_POST['tipo'] ?? 'Nuevo fallo / punto';
+    $mensaje_reporte = trim($_POST['mensaje'] ?? '');
+    $contacto = trim($_POST['contacto'] ?? '');
+
+    if ($mensaje_reporte !== '') {
+        $stmt = $pdo->prepare("INSERT INTO reportes (modelo_id, tipo, mensaje, contacto) VALUES (?, ?, ?, ?)");
+        $stmt->execute([$modelo_id, $tipo, $mensaje_reporte, $contacto]);
+        
+        header("Location: ficha.php?id=$modelo_id&reportado=1#seccion-reporte");
+        exit;
+    }
+}
 
 // 1. Obtener datos del modelo
 $stmt = $pdo->prepare("SELECT * FROM modelos WHERE id = ?");
@@ -90,7 +106,7 @@ $puntos = $stmt->fetchAll();
             data-modelo-id="<?= $coche['id'] ?>" 
             data-modelo-nombre="<?= htmlspecialchars($coche['marca'] . ' ' . $coche['modelo'] . ' (' . $coche['generacion'] . ')') ?>"
             class="alert alert-success d-flex align-items-center gap-3 mb-3">
-            
+
             <!-- Barra de acciones rápidas -->
             <div class="d-flex justify-content-between align-items-center gap-2 mb-4">
                 <button type="button" id="btn-copiar-informe" class="btn btn-dark btn-sm">
@@ -137,6 +153,49 @@ $puntos = $stmt->fetchAll();
                     </div>
                 <?php endforeach; ?>
             </div>
+        </div>
+    </div>
+    <!-- Buzón de colaboración / Reportar fallo -->
+    <div id="seccion-reporte" class="card shadow-sm border-0 mt-4">
+        <div class="card-body p-4">
+            <?php if (isset($_GET['reportado'])): ?>
+                <div class="alert alert-success mb-3">
+                    ✅ <strong>¡Gracias por aportar!</strong> Hemos recibido tu reporte y lo revisaremos para mejorar esta guía.
+                </div>
+            <?php endif; ?>
+
+            <details <?= isset($_GET['reportado']) ? '' : '' ?>>
+                <summary class="fw-bold text-dark" style="cursor: pointer;">
+                    💡 ¿Conoces otro fallo común de este coche o ves algún dato erróneo? Repórtalo aquí
+                </summary>
+                
+                <form method="POST" class="mt-3 pt-3 border-top d-flex flex-column gap-3">
+                    <input type="hidden" name="enviar_reporte" value="1">
+                    
+                    <div>
+                        <label class="form-label small fw-bold">Motivo del reporte</label>
+                        <select name="tipo" class="form-select form-select-sm">
+                            <option value="Nuevo fallo / punto">Añadir un fallo común o punto a revisar</option>
+                            <option value="Dato erróneo">Corregir un dato erróneo en la ficha</option>
+                            <option value="Otro">Otra sugerencia</option>
+                        </select>
+                    </div>
+
+                    <div>
+                        <label class="form-label small fw-bold">Cuéntanos los detalles (motor afectado, síntomas, coste...)</label>
+                        <textarea name="mensaje" rows="3" class="form-control form-control-sm" placeholder="Ej. En los motores 1.6 gasolina suele fallar el sensor de cigüeñal en caliente..." required></textarea>
+                    </div>
+
+                    <div>
+                        <label class="form-label small fw-bold">Tu nombre o email (opcional, por si queremos preguntarte)</label>
+                        <input type="text" name="contacto" class="form-control form-control-sm" placeholder="Opcional">
+                    </div>
+
+                    <div class="text-end">
+                        <button type="submit" class="btn btn-outline-dark btn-sm">Enviar reporte</button>
+                    </div>
+                </form>
+            </details>
         </div>
     </div>
 </div>
