@@ -45,9 +45,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
 
         $precio_orientativo = (int)($_POST['precio_orientativo'] ?? 5000);
+        $ranking_ventas = (isset($_POST['ranking_ventas']) && $_POST['ranking_ventas'] !== '')
+            ? (int)$_POST['ranking_ventas']
+            : null;
 
-        $stmt = $pdo->prepare("UPDATE modelos SET marca = ?, modelo = ?, generacion = ?, anio_inicio = ?, anio_fin = ?, puntuacion_general = ?, resumen_veredicto = ?, imagen_url = ?, uso_ideal = ?, precio_orientativo = ? WHERE id = ?");
-        $stmt->execute([$marca, $modelo, $generacion, $anio_inicio, $anio_fin, $puntuacion, $veredicto, $ruta_imagen, $uso_ideal, $precio_orientativo, $modelo_id]);
+        $stmt = $pdo->prepare("UPDATE modelos SET marca = ?, modelo = ?, generacion = ?, anio_inicio = ?, anio_fin = ?, puntuacion_general = ?, resumen_veredicto = ?, imagen_url = ?, uso_ideal = ?, precio_orientativo = ?, ranking_ventas = ? WHERE id = ?");
+        $stmt->execute([$marca, $modelo, $generacion, $anio_inicio, $anio_fin, $puntuacion, $veredicto, $ruta_imagen, $uso_ideal, $precio_orientativo, $ranking_ventas, $modelo_id]);
         $mensaje = "Datos del vehículo actualizados.";
     }
 
@@ -216,6 +219,13 @@ $puntos = $stmt->fetchAll();
                 <div class="col-12">
                     <label class="form-label small fw-bold">Veredicto general</label>
                     <textarea name="resumen_veredicto" rows="3" class="form-control" required><?= htmlspecialchars($coche['resumen_veredicto']) ?></textarea>
+                </div>
+
+                <div class="col-md-4">
+                    <label class="form-label small fw-bold">Posición Top Ventas <span class="fw-normal text-muted">(opcional, dejar vacío si no aplica)</span></label>
+                    <input type="number" name="ranking_ventas" min="1" class="form-control"
+                           value="<?= $coche['ranking_ventas'] !== null ? (int)$coche['ranking_ventas'] : '' ?>"
+                           placeholder="Ej. 1, 2, 3…">
                 </div>
 
                 <div class="col-12">

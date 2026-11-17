@@ -54,9 +54,12 @@ if (!empty($_SESSION['es_admin']) && $_SERVER['REQUEST_METHOD'] === 'POST') {
         }
 
         $precio_orientativo = (int)($_POST['precio_orientativo'] ?? 5000);
+        $ranking_ventas = (isset($_POST['ranking_ventas']) && $_POST['ranking_ventas'] !== '')
+            ? (int)$_POST['ranking_ventas']
+            : null;
 
-        $stmt = $pdo->prepare("INSERT INTO modelos (marca, modelo, generacion, anio_inicio, anio_fin, puntuacion_general, resumen_veredicto, imagen_url, uso_ideal, precio_orientativo) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
-        $stmt->execute([$marca, $modelo, $generacion, $anio_inicio, $anio_fin, $puntuacion, $veredicto, $ruta_imagen, $uso_ideal, $precio_orientativo]);
+        $stmt = $pdo->prepare("INSERT INTO modelos (marca, modelo, generacion, anio_inicio, anio_fin, puntuacion_general, resumen_veredicto, imagen_url, uso_ideal, precio_orientativo, ranking_ventas) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
+        $stmt->execute([$marca, $modelo, $generacion, $anio_inicio, $anio_fin, $puntuacion, $veredicto, $ruta_imagen, $uso_ideal, $precio_orientativo, $ranking_ventas]);
         
         $mensaje = "Modelo <strong>$marca $modelo</strong> añadido correctamente.";
 
@@ -255,6 +258,10 @@ $reportes = $pdo->query("
                             <div class="col-md-4">
                                 <label class="form-label small fw-bold">Precio medio mercado (€)</label>
                                 <input type="number" name="precio_orientativo" class="form-control form-control-sm" value="5000" step="100" required>
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label small fw-bold">Posición Top Ventas <span class="fw-normal text-muted">(opcional, dejar vacío si no aplica)</span></label>
+                                <input type="number" name="ranking_ventas" min="1" class="form-control form-control-sm" placeholder="Ej. 1, 2, 3…">
                             </div>
                         </form>
                     </div>

@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Servidor: 127.0.0.1
--- Tiempo de generación: 17-11-2026 a las 18:30:13
+-- Tiempo de generación: 17-11-2026 a las 19:35:07
 -- Versión del servidor: 10.4.32-MariaDB
 -- Versión de PHP: 8.2.12
 
@@ -73,18 +73,19 @@ CREATE TABLE `modelos` (
   `resumen_veredicto` text DEFAULT NULL,
   `imagen_url` varchar(255) DEFAULT 'assets/img/default-car.jpg',
   `uso_ideal` varchar(50) DEFAULT 'Uso mixto',
-  `precio_orientativo` int(11) NOT NULL DEFAULT 5000
+  `precio_orientativo` int(11) NOT NULL DEFAULT 5000,
+  `ranking_ventas` int(11) DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
 -- Volcado de datos para la tabla `modelos`
 --
 
-INSERT INTO `modelos` (`id`, `marca`, `modelo`, `generacion`, `anio_inicio`, `anio_fin`, `puntuacion_general`, `resumen_veredicto`, `imagen_url`, `uso_ideal`, `precio_orientativo`) VALUES
-(1, 'Volkswagen', 'Golf', 'Mk5 (1K)', 2003, 2008, 3.8, 'Excelente chasis y seguridad. Repuestos por todas partes, pero ojo crítico a los primeros 2.0 TDI y a las cajas DSG sin mantenimiento.', 'assets/img/golf-mk5.jpg', 'Uso mixto', 5000),
-(2, 'Ford', 'Focus', 'Mk2', 2004, 2011, 4.0, 'Excelente chasis multibrazo. Los gasolina 1.6 son casi indestructibles y los 1.6/2.0 TDCi son ruteros y economicos si se cuida el mantenimiento.', 'assets/img/focus-mk2.jpg', 'Viajes largos', 5000),
-(3, 'BMW', 'Serie 3', 'E90', 2005, 2012, 3.2, 'Dinamica de conduccion impecable y acabados premium, pero requiere ser muy selectivo con la motorizacion por el riesgo de distribucion.', 'assets/img/bmw-e90.jpg', 'Viajes largos', 5000),
-(6, 'Honda', 'Prelude', 'BA4-5', 1987, 1991, 4.0, 'Clásico japonés con un paso por curva histórico gracias a su suspensión delantera de doble horquilla y el sistema mecánico de 4 ruedas directrices (4WS). Mecánica muy agradecida si se respeta el mantenimiento, pero la escasez de recambios de carrocería e interior exige buscar una unidad completa y libre de óxido.', 'assets/img/honda-prelude-ba4.jpg', 'Deportivo / Disfrute', 5000);
+INSERT INTO `modelos` (`id`, `marca`, `modelo`, `generacion`, `anio_inicio`, `anio_fin`, `puntuacion_general`, `resumen_veredicto`, `imagen_url`, `uso_ideal`, `precio_orientativo`, `ranking_ventas`) VALUES
+(1, 'Volkswagen', 'Golf', 'Mk5 (1K)', 2003, 2008, 3.8, 'Excelente chasis y seguridad. Repuestos por todas partes, pero ojo crítico a los primeros 2.0 TDI y a las cajas DSG sin mantenimiento.', 'assets/img/golf-mk5.jpg', 'Uso mixto', 5000, NULL),
+(2, 'Ford', 'Focus', 'Mk2', 2004, 2011, 4.0, 'Excelente chasis multibrazo. Los gasolina 1.6 son casi indestructibles y los 1.6/2.0 TDCi son ruteros y economicos si se cuida el mantenimiento.', 'assets/img/focus-mk2.jpg', 'Viajes largos', 5000, NULL),
+(3, 'BMW', 'Serie 3', 'E90', 2005, 2012, 3.2, 'Dinamica de conduccion impecable y acabados premium, pero requiere ser muy selectivo con la motorizacion por el riesgo de distribucion.', 'assets/img/bmw-e90.jpg', 'Viajes largos', 5000, 1),
+(6, 'Honda', 'Prelude', 'BA4-5', 1987, 1991, 4.0, 'Clásico japonés con un paso por curva histórico gracias a su suspensión delantera de doble horquilla y el sistema mecánico de 4 ruedas directrices (4WS). Mecánica muy agradecida si se respeta el mantenimiento, pero la escasez de recambios de carrocería e interior exige buscar una unidad completa y libre de óxido.', 'assets/img/honda-prelude-ba4.jpg', 'Deportivo / Disfrute', 5000, NULL);
 
 -- --------------------------------------------------------
 

@@ -4,7 +4,7 @@ require_once 'db.php';
 $busqueda = trim($_GET['q'] ?? '');
 $uso = trim($_GET['uso'] ?? '');
 
-// Construimos la consulta dinámicamente según los filtros activos
+// ── Consulta catálogo general ─────────────────────────────────────────────
 $sql = "SELECT * FROM modelos WHERE 1=1";
 $params = [];
 
@@ -26,6 +26,20 @@ $sql .= " ORDER BY marca, modelo";
 $stmt = $pdo->prepare($sql);
 $stmt->execute($params);
 $modelos = $stmt->fetchAll();
+
+// ── Consulta Top Ventas (siempre, sin filtros de sesión) ──────────────────
+$top_ventas = $pdo->query("
+    SELECT m.*,
+           (SELECT mot.nombre FROM motores mot
+            WHERE mot.modelo_id = m.id AND mot.semaforo = 'Rojo'
+            ORDER BY mot.id ASC LIMIT 1) AS motor_rojo,
+           (SELECT mot.nombre FROM motores mot
+            WHERE mot.modelo_id = m.id AND mot.semaforo = 'Verde'
+            ORDER BY mot.id ASC LIMIT 1) AS motor_verde
+    FROM modelos m
+    WHERE m.ranking_ventas IS NOT NULL
+    ORDER BY m.ranking_ventas ASC
+")->fetchAll();
 ?>
 <!DOCTYPE html>
 <html lang="es">
@@ -87,6 +101,8 @@ $modelos = $stmt->fetchAll();
                         data-uso="Viajes largos">Viajes largos</button>
                 <button class="filter-pill-btn <?= $uso === 'Deportivo / Disfrute'? 'active' : '' ?>"
                         data-uso="Deportivo / Disfrute">Deportivo</button>
+                <button class="filter-pill-btn <?= $uso === '__top__' ? 'active' : '' ?>"
+                        data-uso="__top__">Top Ventas</button>
             </div>
         </div>
 
@@ -112,6 +128,65 @@ $modelos = $stmt->fetchAll();
         </div>
     </div>
 </div>
+
+<!-- Top Ventas de Ocasión -->
+<?php if (!empty($top_ventas)): ?>
+<div class="container mb-2" style="max-width: 1060px;">
+    <div class="d-flex align-items-baseline gap-3 mb-1">
+        <h2 class="h5 fw-bold mb-0" style="color: var(--text-primary);">Top Ventas de Ocasión</h2>
+        <span class="badge-pill-tech">Los <?= count($top_ventas) ?> más buscados</span>
+    </div>
+    <p class="small mb-4" style="color: var(--text-muted);">Los modelos más buscados en el mercado de segunda mano, analizados bajo lupa mecánica.</p>
+    <div class="row g-4 mb-5" id="top-ventas-grid">
+        <?php foreach ($top_ventas as $tv): ?>
+            <?php
+                $tiene_rojo  = !empty($tv['motor_rojo']);
+                $tiene_verde = !empty($tv['motor_verde']);
+            ?>
+            <div class="col-md-6 col-lg-4 top-ventas-item"
+                 data-marca="<?= htmlspecialchars(strtolower($tv['marca'])) ?>"
+                 data-modelo="<?= htmlspecialchars(strtolower($tv['modelo'])) ?>"
+                 data-uso="<?= htmlspecialchars(strtolower($tv['uso_ideal'])) ?>">
+                <div class="card card-editorial card-editorial-hover h-100 overflow-hidden">
+                    <div class="position-relative">
+                        <img
+                            src="<?= htmlspecialchars($tv['imagen_url']) ?>"
+                            class="card-img-editorial"
+                            alt="<?= htmlspecialchars($tv['marca'] . ' ' . $tv['modelo']) ?>"
+                        >
+                        <span class="badge-ranking">#<?= (int)$tv['ranking_ventas'] ?> Top Ventas</span>
+                    </div>
+                    <div class="card-body d-flex flex-column p-3">
+                        <div class="d-flex flex-wrap align-items-center gap-1 mb-2">
+                            <span class="badge-pill-tech font-mono"><?= htmlspecialchars($tv['generacion']) ?></span>
+                            <span class="badge-pill-tech"><?= htmlspecialchars($tv['uso_ideal']) ?></span>
+                            <span class="badge-pill-tech ms-auto font-mono">★ <?= number_format($tv['puntuacion_general'], 1) ?></span>
+                        </div>
+                        <h3 class="h5 fw-bold mb-1" style="color: var(--text-primary);">
+                            <?= htmlspecialchars($tv['marca'] . ' ' . $tv['modelo']) ?>
+                        </h3>
+                        <small class="font-mono mb-3 d-block" style="color: var(--text-muted);">
+                            <?= (int)$tv['anio_inicio'] ?>–<?= (int)$tv['anio_fin'] ?>
+                        </small>
+                        <?php if ($tiene_rojo): ?>
+                            <div class="p-2 rounded small mb-3 semaforo-rojo">
+                                <strong>Muy vendido, pero evita:</strong> <?= htmlspecialchars($tv['motor_rojo']) ?>
+                            </div>
+                        <?php elseif ($tiene_verde): ?>
+                            <div class="p-2 rounded small mb-3 semaforo-verde">
+                                <strong>Apuesta segura en:</strong> <?= htmlspecialchars($tv['motor_verde']) ?>
+                            </div>
+                        <?php endif; ?>
+                        <a href="ficha.php?id=<?= (int)$tv['id'] ?>" class="btn btn-editorial-primary btn-sm mt-auto">
+                            Ver guía y checklist &rarr;
+                        </a>
+                    </div>
+                </div>
+            </div>
+        <?php endforeach; ?>
+    </div>
+</div>
+<?php endif; ?>
 
 <!-- Listado de Modelos -->
 <div class="container pb-5" style="max-width: 1060px;">
@@ -173,8 +248,8 @@ $modelos = $stmt->fetchAll();
 <script>
 (function () {
     /* ── 1. Buscador live ─────────────────────────────────── */
-    const input        = document.getElementById('buscador-live');
-    const items        = document.querySelectorAll('.catalogo-item');
+    const input         = document.getElementById('buscador-live');
+    const items         = document.querySelectorAll('.catalogo-item');
     const sinResultados = document.getElementById('sin-resultados-live');
 
     function filtrarPorTexto(q) {
@@ -195,9 +270,11 @@ $modelos = $stmt->fetchAll();
     });
 
     /* ── 2. Filter dock: glider deslizante ───────────────── */
-    const dock        = document.getElementById('filterDock');
-    const glider      = document.getElementById('filterGlider');
-    const pills       = dock.querySelectorAll('.filter-pill-btn');
+    const dock       = document.getElementById('filterDock');
+    const glider     = document.getElementById('filterGlider');
+    const pills      = dock.querySelectorAll('.filter-pill-btn');
+    const topGrid    = document.getElementById('top-ventas-grid');
+    const topItems   = document.querySelectorAll('.top-ventas-item');
 
     function moveGlider(activeBtn) {
         glider.style.width     = activeBtn.offsetWidth + 'px';
@@ -208,48 +285,63 @@ $modelos = $stmt->fetchAll();
         return dock.querySelector('.filter-pill-btn.active') || pills[0];
     }
 
-    /* Posicionar al cargar */
     document.addEventListener('DOMContentLoaded', function () {
         moveGlider(getActiveBtn());
     });
 
-    /* Reposicionar al redimensionar */
     window.addEventListener('resize', function () {
         moveGlider(getActiveBtn());
     });
 
-    /* Clic en cada pastilla */
     pills.forEach(function (btn) {
         btn.addEventListener('click', function () {
-            /* Actualizar clase active */
             pills.forEach(function (p) { p.classList.remove('active'); });
             btn.classList.add('active');
-
-            /* Mover glider */
             moveGlider(btn);
-
-            /* Centrar en móvil con scroll suave */
             btn.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' });
 
-            /* Filtrar el grid por uso */
             const usoFiltro = btn.dataset.uso.toLowerCase();
+            const esTopVentas = usoFiltro === '__top__';
+
+            /* Mostrar/ocultar sección Top Ventas completa */
+            if (topGrid) {
+                const seccion = topGrid.closest('.container');
+                if (seccion) seccion.style.display = esTopVentas ? '' : 'none';
+            }
+
+            /* Filtrar catálogo general */
             let visibles = 0;
             items.forEach(function (card) {
-                const usoCard = card.dataset.uso || '';
-                const coincide = !usoFiltro || usoCard === usoFiltro;
+                let coincide;
+                if (esTopVentas) {
+                    /* En Top Ventas, mostrar solo los que están en el top */
+                    const topIds = Array.from(topItems).map(function(ti) {
+                        return ti.querySelector('a[href]') ? ti.querySelector('a[href]').getAttribute('href') : '';
+                    });
+                    const href = card.querySelector('a[href]') ? card.querySelector('a[href]').getAttribute('href') : '';
+                    coincide = topIds.includes(href);
+                } else if (!usoFiltro) {
+                    coincide = true;
+                } else {
+                    coincide = card.dataset.uso === usoFiltro;
+                }
                 card.style.display = coincide ? '' : 'none';
                 if (coincide) visibles++;
             });
             sinResultados.classList.toggle('d-none', visibles > 0);
 
-            /* Limpiar el buscador live para que no interfiera */
             input.value = '';
         });
     });
 
-    /* Posicionar glider después de que el layout esté pintado */
     requestAnimationFrame(function () {
         moveGlider(getActiveBtn());
+        /* Ocultar sección Top Ventas si no es el filtro activo al cargar */
+        const activeUso = getActiveBtn().dataset.uso;
+        if (activeUso !== '__top__' && topGrid) {
+            const seccion = topGrid.closest('.container');
+            if (seccion) seccion.style.display = '';
+        }
     });
 })();
 </script>
