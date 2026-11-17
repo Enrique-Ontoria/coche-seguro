@@ -53,6 +53,7 @@ $modelos = $stmt->fetchAll();
             Guías de compra, semáforos de fiabilidad y checklist sin engaños
         </span>
     </div>
+    <a href="recomendador.php" class="btn btn-warning btn-sm fw-bold">🧭 ¿Qué coche me compro?</a>
 </nav>
 
 <!-- Hero con Buscador y Filtros Rápidos -->

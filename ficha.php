@@ -199,7 +199,88 @@ $puntos = $stmt->fetchAll();
         </div>
     </div>
 </div>
+    <?php
+    // ── Parámetros opcionales del recomendador ────────────────────────────────
+    $max_price = filter_input(INPUT_GET, 'max_price', FILTER_VALIDATE_INT) ?: null;
+    $fuel_raw  = isset($_GET['fuel']) ? trim(strip_tags($_GET['fuel'])) : '';
+    $fuel      = in_array($fuel_raw, ['Gasolina', 'Diésel', 'Híbrido'], true) ? $fuel_raw : '';
 
+    // ── Mapas de combustible por portal ──────────────────────────────────────
+    $fuel_wallapop   = ['Gasolina' => 'gasoline', 'Diésel' => 'gasoil',   'Híbrido' => 'hybrid'];
+    $fuel_autoscout  = ['Gasolina' => 'B',         'Diésel' => 'D',        'Híbrido' => '2'];
+    $fuel_cochesnet  = ['Gasolina' => '1',          'Diésel' => '2',        'Híbrido' => '4'];
+    $fuel_milanuncios= ['Gasolina' => 'gasolina',  'Diésel' => 'diesel',   'Híbrido' => 'hibrido'];
+
+    // ── Construir parámetros limpios de búsqueda ──────────────────────────────
+    $query_texto = urlencode($coche['marca'] . ' ' . $coche['modelo']);
+    $slug_marca  = strtolower(preg_replace('/[^a-zA-Z0-9]/', '-', $coche['marca']));
+    $slug_modelo = strtolower(preg_replace('/[^a-zA-Z0-9]/', '-', $coche['modelo']));
+    $anio_min    = (int)$coche['anio_inicio'];
+    $anio_max    = (int)$coche['anio_fin'];
+
+    // ── Wallapop ──────────────────────────────────────────────────────────────
+    $url_wallapop = "https://es.wallapop.com/app/search?keywords={$query_texto}&min_year={$anio_min}&max_year={$anio_max}&category_ids=100";
+    if ($max_price) $url_wallapop .= "&max_sale_price={$max_price}";
+    if ($fuel !== '' && isset($fuel_wallapop[$fuel])) $url_wallapop .= "&engine={$fuel_wallapop[$fuel]}";
+
+    // ── AutoScout24 ───────────────────────────────────────────────────────────
+    $url_autoscout = "https://www.autoscout24.es/lst/{$slug_marca}/{$slug_modelo}?fregfrom={$anio_min}&fregto={$anio_max}&sort=price&desc=0";
+    if ($max_price) $url_autoscout .= "&priceto={$max_price}";
+    if ($fuel !== '' && isset($fuel_autoscout[$fuel])) $url_autoscout .= "&fuel={$fuel_autoscout[$fuel]}";
+
+    // ── Coches.net ────────────────────────────────────────────────────────────
+    $url_cochesnet = "https://www.coches.net/segunda-mano/?KeyWords={$query_texto}&MinYear={$anio_min}&MaxYear={$anio_max}";
+    if ($max_price) $url_cochesnet .= "&MaxPrice={$max_price}";
+    if ($fuel !== '' && isset($fuel_cochesnet[$fuel])) $url_cochesnet .= "&FuelType={$fuel_cochesnet[$fuel]}";
+
+    // ── Milanuncios ───────────────────────────────────────────────────────────
+    $url_milanuncios = "https://www.milanuncios.com/coches-de-segunda-mano/{$slug_marca}-{$slug_modelo}.htm?desde={$anio_min}&hasta={$anio_max}";
+    if ($max_price) $url_milanuncios .= "&hasta_precio={$max_price}";
+    if ($fuel !== '' && isset($fuel_milanuncios[$fuel])) $url_milanuncios .= "&combustible={$fuel_milanuncios[$fuel]}";
+    ?>
+
+    <!-- Bloque: Buscar unidades en venta -->
+    <div class="card shadow-sm border-0 mb-4">
+        <div class="card-body p-4">
+            <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3">
+                <div>
+                    <h5 class="fw-bold mb-1">🔎 Buscar unidades en venta (<?= $anio_min ?>–<?= $anio_max ?>)</h5>
+                    <p class="text-muted small mb-0">
+                        Enlaces directos filtrados por generación. Recuerda filtrar luego por los motores en <strong>Verde</strong>.
+                    </p>
+                    <?php if ($max_price || $fuel !== ''): ?>
+                    <div class="mt-2 d-flex flex-wrap gap-2">
+                        <?php if ($max_price): ?>
+                        <span class="badge bg-primary bg-opacity-10 text-primary border border-primary-subtle fw-normal">
+                            💰 Presupuesto máx: <?= number_format($max_price, 0, ',', '.') ?> €
+                        </span>
+                        <?php endif; ?>
+                        <?php if ($fuel !== ''): ?>
+                        <span class="badge bg-success bg-opacity-10 text-success border border-success-subtle fw-normal">
+                            ⛽ Combustible: <?= htmlspecialchars($fuel) ?>
+                        </span>
+                        <?php endif; ?>
+                        <span class="text-muted" style="font-size:.75rem;">· Filtros aplicados desde el recomendador</span>
+                    </div>
+                    <?php endif; ?>
+                </div>
+                <div class="d-flex flex-wrap gap-2">
+                    <a href="<?= $url_wallapop ?>" target="_blank" rel="noopener noreferrer" class="btn btn-outline-success btn-sm fw-semibold">
+                        Wallapop &nearr;
+                    </a>
+                    <a href="<?= $url_cochesnet ?>" target="_blank" rel="noopener noreferrer" class="btn btn-outline-danger btn-sm fw-semibold">
+                        Coches.net &nearr;
+                    </a>
+                    <a href="<?= $url_autoscout ?>" target="_blank" rel="noopener noreferrer" class="btn btn-outline-warning text-dark btn-sm fw-semibold">
+                        AutoScout24 &nearr;
+                    </a>
+                    <a href="<?= $url_milanuncios ?>" target="_blank" rel="noopener noreferrer" class="btn btn-outline-secondary btn-sm fw-semibold">
+                        Milanuncios &nearr;
+                    </a>
+                </div>
+            </div>
+        </div>
+</div>
 <script src="assets/js/checklist.js"></script>
 </body>
 </html>

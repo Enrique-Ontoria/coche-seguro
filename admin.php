@@ -53,10 +53,14 @@ if (!empty($_SESSION['es_admin']) && $_SERVER['REQUEST_METHOD'] === 'POST') {
             }
         }
 
-        $stmt = $pdo->prepare("INSERT INTO modelos (marca, modelo, generacion, anio_inicio, anio_fin, puntuacion_general, resumen_veredicto, imagen_url, uso_ideal) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)");
-        $stmt->execute([$marca, $modelo, $generacion, $anio_inicio, $anio_fin, $puntuacion, $veredicto, $ruta_imagen, $uso_ideal]);
+        $precio_orientativo = (int)($_POST['precio_orientativo'] ?? 5000);
+
+        $stmt = $pdo->prepare("INSERT INTO modelos (marca, modelo, generacion, anio_inicio, anio_fin, puntuacion_general, resumen_veredicto, imagen_url, uso_ideal, precio_orientativo) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
+        $stmt->execute([$marca, $modelo, $generacion, $anio_inicio, $anio_fin, $puntuacion, $veredicto, $ruta_imagen, $uso_ideal, $precio_orientativo]);
         
         $mensaje = "Modelo <strong>$marca $modelo</strong> añadido correctamente.";
+
+        
     }
 
     // B) Añadir motor a un modelo existente
@@ -247,6 +251,10 @@ $reportes = $pdo->query("
 
                             <div class="col-12">
                                 <button type="submit" class="btn btn-primary">Guardar Modelo</button>
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label small fw-bold">Precio medio mercado (€)</label>
+                                <input type="number" name="precio_orientativo" class="form-control form-control-sm" value="5000" step="100" required>
                             </div>
                         </form>
                     </div>

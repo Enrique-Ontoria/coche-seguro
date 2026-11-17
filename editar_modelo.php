@@ -44,8 +44,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             }
         }
 
-        $stmt = $pdo->prepare("UPDATE modelos SET marca = ?, modelo = ?, generacion = ?, anio_inicio = ?, anio_fin = ?, puntuacion_general = ?, resumen_veredicto = ?, imagen_url = ?, uso_ideal = ? WHERE id = ?");
-        $stmt->execute([$marca, $modelo, $generacion, $anio_inicio, $anio_fin, $puntuacion, $veredicto, $ruta_imagen, $uso_ideal, $modelo_id]);
+        $precio_orientativo = (int)($_POST['precio_orientativo'] ?? 5000);
+
+        $stmt = $pdo->prepare("UPDATE modelos SET marca = ?, modelo = ?, generacion = ?, anio_inicio = ?, anio_fin = ?, puntuacion_general = ?, resumen_veredicto = ?, imagen_url = ?, uso_ideal = ?, precio_orientativo = ? WHERE id = ?");
+        $stmt->execute([$marca, $modelo, $generacion, $anio_inicio, $anio_fin, $puntuacion, $veredicto, $ruta_imagen, $uso_ideal, $precio_orientativo, $modelo_id]);
         $mensaje = "Datos del vehículo actualizados.";
     }
 
